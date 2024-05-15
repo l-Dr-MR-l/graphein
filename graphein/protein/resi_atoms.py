@@ -159,6 +159,7 @@ NON_STANDARD_AMINO_ACID_MAPPING_3_TO_1: Dict[str, str] = {
     "HID": "H",
     "HIE": "H",
     "HIP": "H",
+    "HSP": "H",
     "PYL": "O",
     "SEC": "U",
 }
@@ -500,6 +501,7 @@ NON_STANDARD_RESI_NAMES: List[str] = [
     "HID",
     "HIE",
     "HIP",
+    "HSP",
     "HYP",
     "IVA",
     "KCX",
@@ -582,6 +584,7 @@ RESI_NAMES: List[str] = [
     "HID",
     "HIE",
     "HIP",
+    "HSP",
     "HIS",
     "HYP",
     "ILE",
@@ -682,6 +685,7 @@ RESI_THREE_TO_1: Dict[str, str] = {
     "HID": "H",  # Different protonation states of HIS
     "HIE": "H",  # Different protonation states of HIS
     "HIP": "H",  # Different protonation states of HIS
+    "HSP": "H",  # Different protonation states of HIS
     "HIS": "H",
     "HYP": "P",
     "ILE": "I",
