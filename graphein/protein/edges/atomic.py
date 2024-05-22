@@ -209,6 +209,7 @@ def add_bond_order(G: nx.Graph) -> nx.Graph:
     :rtype: mx.Graph
     """
     for u, v, a in G.edges(data=True):
+        print("G.nodes[u]: ", G.nodes[u])
         atom_a = G.nodes[u]["element_symbol"]
         atom_b = G.nodes[v]["element_symbol"]
 
