@@ -160,6 +160,7 @@ NON_STANDARD_AMINO_ACID_MAPPING_3_TO_1: Dict[str, str] = {
     "HIE": "H",
     "HIP": "H",
     "HSP": "H",
+    "HSD": "H",
     "PYL": "O",
     "SEC": "U",
 }
