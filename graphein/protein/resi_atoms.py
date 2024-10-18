@@ -503,6 +503,7 @@ NON_STANDARD_RESI_NAMES: List[str] = [
     "HIE",
     "HIP",
     "HSP",
+    "HSD",
     "HYP",
     "IVA",
     "KCX",
@@ -586,6 +587,7 @@ RESI_NAMES: List[str] = [
     "HIE",
     "HIP",
     "HSP",
+    "HSD",
     "HIS",
     "HYP",
     "ILE",
@@ -687,6 +689,7 @@ RESI_THREE_TO_1: Dict[str, str] = {
     "HIE": "H",  # Different protonation states of HIS
     "HIP": "H",  # Different protonation states of HIS
     "HSP": "H",  # Different protonation states of HIS
+    "HSD": "H",  # Different protonation states of HIS
     "HIS": "H",
     "HYP": "P",
     "ILE": "I",
