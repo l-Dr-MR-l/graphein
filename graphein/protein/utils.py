@@ -11,11 +11,12 @@ import tempfile
 from functools import lru_cache, partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 from urllib.error import HTTPError
 from urllib.request import urlopen
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 import requests
 import wget
@@ -24,6 +25,30 @@ from loguru import logger as log
 from tqdm import tqdm
 
 from .resi_atoms import BACKBONE_ATOMS, RESI_THREE_TO_1
+
+pdb_df_columns = [
+    "record_name",
+    "atom_number",
+    "blank_1",
+    "atom_name",
+    "alt_loc",
+    "residue_name",
+    "blank_2",
+    "chain_id",
+    "residue_number",
+    "insertion",
+    "blank_3",
+    "x_coord",
+    "y_coord",
+    "z_coord",
+    "occupancy",
+    "b_factor",
+    "blank_4",
+    "segment_id",
+    "element_symbol",
+    "charge",
+    "line_idx",
+]
 
 
 class ProteinGraphConfigurationError(Exception):
@@ -96,7 +121,7 @@ def read_fasta(file_path: str) -> Dict[str, str]:
 def download_pdb_multiprocessing(
     pdb_codes: List[str],
     out_dir: Union[str, Path],  # type: ignore
-    format: str = "pdb",
+    format: Literal["pdb", "mmtf", "mmcif", "cif", "bcif"] = "pdb",
     overwrite: bool = False,
     strict: bool = False,
     max_workers: int = 16,
@@ -108,7 +133,7 @@ def download_pdb_multiprocessing(
     :type pdb_codes: List[str]
     :param out_dir: Path to directory to download PDB structures to.
     :type out_dir: Union[str, Path]
-    :param format: Filetype to download. ``pdb`` or ``mmtf``.
+    :param format: Filetype to download. ``pdb``, ``mmtf``, ``mmcif``/``cif`` or ``bcif``.
     :type format: str
     :param overwrite: Whether to overwrite existing files, defaults to
         ``False``.
@@ -146,7 +171,7 @@ def download_pdb_multiprocessing(
 def download_pdb(
     pdb_code: str,
     out_dir: Optional[Union[str, Path]] = None,
-    format: str = "pdb",
+    format: Literal["pdb", "mmtf", "mmcif", "cif", "bcif"] = "pdb",
     check_obsolete: bool = False,
     overwrite: bool = False,
     strict: bool = True,
@@ -162,7 +187,7 @@ def download_pdb(
     :param out_dir: Path to directory to download PDB structure to. If ``None``,
         will download to a temporary directory.
     :type out_dir: Optional[Union[str, Path]]
-    :param format: Filetype to download. ``pdb`` or ``mmtf``.
+    :param format: Filetype to download. ``pdb``, ``mmtf``, ``mmcif``/``cif`` or ``bcif``.
     :type format: str
     :param check_obsolete: Whether to check for obsolete PDB codes,
         defaults to ``False``. If an obsolete PDB code is found, the updated PDB
@@ -183,8 +208,16 @@ def download_pdb(
     elif format == "mmtf":
         BASE_URL = "https://mmtf.rcsb.org/v1.0/full/"
         extension = ".mmtf.gz"
+    elif format == "cif" or format == "mmcif":
+        BASE_URL = "https://files.rcsb.org/download/"
+        extension = ".cif.gz"
+    elif format == "bcif":
+        BASE_URL = "https://models.rcsb.org/"
+        extension = ".bcif.gz"
     else:
-        raise ValueError(f"Invalid format: {format}. Must be 'pdb' or 'mmtf'.")
+        raise ValueError(
+            f"Invalid format: {format}. Must be 'pdb', 'mmtf', '(mm)cif' or 'bcif'."
+        )
 
     # Make output directory if it doesn't exist or set it to tempdir if None
     if out_dir is not None:
@@ -410,12 +443,27 @@ def save_graph_to_pdb(
     :type gz: bool
     """
     ppd = PandasPdb()
-    atom_df = filter_dataframe(
-        g.graph["pdb_df"], "record_name", ["ATOM"], boolean=True
-    )
-    hetatm_df = filter_dataframe(
-        g.graph["pdb_df"], "record_name", ["HETATM"], boolean=True
-    )
+
+    df = g.graph["pdb_df"].copy()
+    # format charge correctly
+    df.charge = pd.to_numeric(df.charge, errors="coerce")
+
+    # Add blank columns
+    blank_cols = [
+        "blank_1",
+        "blank_2",
+        "blank_3",
+        "blank_4",
+        "segment_id",
+    ]
+    for col in blank_cols:
+        if col not in df.columns:
+            df[col] = ""
+    df["line_idx"] = list(range(1, len(df) + 1))
+    df = df[pdb_df_columns]
+    atom_df = filter_dataframe(df, "record_name", ["ATOM"], boolean=True)
+    hetatm_df = filter_dataframe(df, "record_name", ["HETATM"], boolean=True)
+
     if atoms:
         ppd.df["ATOM"] = atom_df
     if hetatms:
@@ -440,9 +488,22 @@ def save_pdb_df_to_pdb(
     :param gz: Whether to gzip the file. Defaults to ``False``.
     :type gz: bool
     """
+    df = df.copy()
+    # format charge correctly
+    df.charge = pd.to_numeric(df.charge, errors="coerce")
+    df.alt_loc = df.alt_loc.fillna(" ")
+    blank_cols = ["blank_1", "blank_2", "blank_3", "blank_4", "segment_id"]
+    for col in blank_cols:
+        if col not in df.columns:
+            df[col] = ""
+    df["line_idx"] = list(range(1, len(df) + 1))
+    df = df[pdb_df_columns]
+
     atom_df = filter_dataframe(df, "record_name", ["ATOM"], boolean=True)
     hetatm_df = filter_dataframe(df, "record_name", ["HETATM"], boolean=True)
+
     ppd = PandasPdb()
+
     if atoms:
         ppd.df["ATOM"] = atom_df
     if hetatms:
@@ -473,12 +534,21 @@ def save_rgroup_df_to_pdb(
     :type gz: bool
     """
     ppd = PandasPdb()
-    atom_df = filter_dataframe(
-        g.graph["rgroup_df"], "record_name", ["ATOM"], boolean=True
-    )
-    hetatm_df = filter_dataframe(
-        g.graph["rgroup_df"], "record_name", ["HETATM"], boolean=True
-    )
+    df = g.graph["rgroup_df"].copy()
+
+    # format charge correctly
+    df.charge = pd.to_numeric(df.charge, errors="coerce")
+
+    blank_cols = ["blank_1", "blank_2", "blank_3", "blank_4", "segment_id"]
+    for col in blank_cols:
+        if col not in df.columns:
+            df[col] = [""] * len(df)
+    df["line_idx"] = list(range(1, len(df) + 1))
+    df = df[pdb_df_columns]
+
+    atom_df = filter_dataframe(df, "record_name", ["ATOM"], boolean=True)
+    hetatm_df = filter_dataframe(df, "record_name", ["HETATM"], boolean=True)
+
     if atoms:
         ppd.df["ATOM"] = atom_df
     if hetatms:

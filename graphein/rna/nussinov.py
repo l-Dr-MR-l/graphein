@@ -1,5 +1,5 @@
 """Nussinov algorithm for computing RNA secondary structure adopted from
-adopted from https://github.com/cgoliver/Nussinov/blob/master/nussinov.py """
+adopted from https://github.com/cgoliver/Nussinov/blob/master/nussinov.py"""
 
 # %%
 # Graphein
@@ -148,7 +148,7 @@ def initialize(
     """
 
     DP = np.empty((N, N))
-    DP[:] = np.NAN
+    DP[:] = np.nan
     for k in range(MIN_LOOP_LENGTH):
         for i in range(N - k):
             j = i + k
