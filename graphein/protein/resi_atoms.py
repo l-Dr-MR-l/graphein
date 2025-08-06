@@ -225,6 +225,17 @@ PROTEIN_ATOMS: List[str] = [
 
 
 STANDARD_RESIDUE_ATOMS: Dict[str, List[str]] = {
+    "ADP": [
+    "C4'", "H4'", "O4'", "C1'", "H1'",
+    "C5", "N7", "C8", "H8", "N9",
+    "N1", "C2", "H2", "N3", "C4",
+    "C6", "N6", "H61", "H62",
+    "C2'", "H2''", "O2'", "H2'",
+    "C3'", "H3'", "O3'", "H3T",
+    "C5'", "H5'", "H5''", "O5'",
+    "PA", "O1A", "O2A", "O3A",
+    "PB", "O1B", "O2B", "O3B"
+    ],
     "ALA": ["N", "CA", "C", "O", "CB"],
     "ARG": ["N", "CA", "C", "O", "CB", "CG", "CD", "NE", "CZ", "NH1", "NH2"],
     "ASN": ["N", "CA", "C", "O", "CB", "CG", "OD1", "ND2"],
@@ -324,6 +335,15 @@ ATOM_NUMBERING: Dict[str, int] = {
 """Default ordering of atoms in (dimension 1 of) a protein structure tensor."""
 
 ELEMENT_SYMBOL_MAP: Dict[str, str] = {
+    "C4'": "C", "H4'": "H", "O4'": "O", "C1'": "C", "H1'": "H",
+    "C5": "C", "N7": "N", "C8": "C", "H8": "H", "N9": "N",
+    "N1": "N", "C2": "C", "H2": "H", "N3": "N", "C4": "C",
+    "C6": "C", "N6": "N", "H61": "H", "H62": "H",
+    "C2'": "C", "H2''": "H", "O2'": "O", "H2'": "H",
+    "C3'": "C", "H3'": "H", "O3'": "O", "H3T": "H",
+    "C5'": "C", "H5'": "H", "H5''": "H", "O5'": "O",
+    "PA": "P", "O1A": "O", "O2A": "O", "O3A": "O",
+    "PB": "P", "O1B": "O", "O2B": "O", "O3B": "O",
     "N": "N",
     "CA": "C",
     "C": "C",
@@ -639,6 +659,7 @@ Includes ``"UNK"`` to denote unknown residues.
 
 # https://www.ebi.ac.uk/pdbe-srv/pdbechem/chemicalCompound
 RESI_THREE_TO_1: Dict[str, str] = {
+    "ADP": "X",
     "3HP": "X",
     "4HP": "X",
     "5HP": "Q",
